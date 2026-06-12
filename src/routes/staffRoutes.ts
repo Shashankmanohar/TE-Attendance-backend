@@ -10,7 +10,7 @@ const router = Router();
 // Configure Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = process.env.NODE_ENV === 'production'
+    const uploadDir = (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production' || __dirname.includes('var/task') || __dirname.includes('var\\task'))
       ? '/tmp/uploads'
       : path.join(__dirname, '../../uploads');
     try {
