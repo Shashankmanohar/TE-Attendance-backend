@@ -4,6 +4,7 @@ import StaffAttendance from '../models/StaffAttendance';
 import { AuthRequest } from '../middleware/auth';
 import { generateQRCode } from '../utils/qrHelper';
 import ActivityLog from '../models/ActivityLog';
+import { uploadToCloudinary } from '../utils/cloudinary';
 
 // Helper to generate unique Staff ID: STF-YYYY-XXXXXX
 const getNextStaffId = async (): Promise<string> => {
@@ -135,7 +136,10 @@ export const createStaff = async (req: AuthRequest, res: Response): Promise<void
     // Retrieve uploaded photo URL if exists
     let photoUrl = '';
     if (req.file) {
-      photoUrl = `/uploads/${req.file.filename}`;
+      photoUrl = await uploadToCloudinary(req.file.path, 'staff');
+      if (!photoUrl) {
+        photoUrl = `/uploads/${req.file.filename}`;
+      }
     }
 
     const staff = await Staff.create({
@@ -193,7 +197,8 @@ export const updateStaff = async (req: AuthRequest, res: Response): Promise<void
     }
 
     if (req.file) {
-      staff.photoUrl = `/uploads/${req.file.filename}`;
+      const uploadedUrl = await uploadToCloudinary(req.file.path, 'staff');
+      staff.photoUrl = uploadedUrl || `/uploads/${req.file.filename}`;
     }
 
     await staff.save();

@@ -5,6 +5,7 @@ import Attendance from '../models/Attendance';
 import { AuthRequest } from '../middleware/auth';
 import { generateQRCode } from '../utils/qrHelper';
 import ActivityLog from '../models/ActivityLog';
+import { uploadToCloudinary } from '../utils/cloudinary';
 
 // Helper to generate unique Student ID: STU-YYYY-XXXXXX
 const getNextStudentId = async (): Promise<string> => {
@@ -155,7 +156,10 @@ export const createStudent = async (req: AuthRequest, res: Response): Promise<vo
     // Retrieve uploaded photo URL if exists
     let photoUrl = '';
     if (req.file) {
-      photoUrl = `/uploads/${req.file.filename}`;
+      photoUrl = await uploadToCloudinary(req.file.path, 'students');
+      if (!photoUrl) {
+        photoUrl = `/uploads/${req.file.filename}`;
+      }
     }
 
     const student = await Student.create({
@@ -234,7 +238,8 @@ export const updateStudent = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     if (req.file) {
-      student.photoUrl = `/uploads/${req.file.filename}`;
+      const uploadedUrl = await uploadToCloudinary(req.file.path, 'students');
+      student.photoUrl = uploadedUrl || `/uploads/${req.file.filename}`;
     }
 
     await student.save();

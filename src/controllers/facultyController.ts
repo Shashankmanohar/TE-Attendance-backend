@@ -4,6 +4,7 @@ import FacultyAttendance from '../models/FacultyAttendance';
 import { AuthRequest } from '../middleware/auth';
 import { generateQRCode } from '../utils/qrHelper';
 import ActivityLog from '../models/ActivityLog';
+import { uploadToCloudinary } from '../utils/cloudinary';
 
 // Helper to generate unique Faculty ID: FAC-YYYY-XXXXXX
 const getNextFacultyId = async (): Promise<string> => {
@@ -135,7 +136,10 @@ export const createFaculty = async (req: AuthRequest, res: Response): Promise<vo
     // Retrieve uploaded photo URL if exists
     let photoUrl = '';
     if (req.file) {
-      photoUrl = `/uploads/${req.file.filename}`;
+      photoUrl = await uploadToCloudinary(req.file.path, 'faculty');
+      if (!photoUrl) {
+        photoUrl = `/uploads/${req.file.filename}`;
+      }
     }
 
     const faculty = await Faculty.create({
@@ -193,7 +197,8 @@ export const updateFaculty = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     if (req.file) {
-      faculty.photoUrl = `/uploads/${req.file.filename}`;
+      const uploadedUrl = await uploadToCloudinary(req.file.path, 'faculty');
+      faculty.photoUrl = uploadedUrl || `/uploads/${req.file.filename}`;
     }
 
     await faculty.save();
