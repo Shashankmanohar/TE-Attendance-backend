@@ -10,10 +10,16 @@ const router = Router();
 // Configure Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads');
+    const uploadDir = process.env.NODE_ENV === 'production'
+      ? '/tmp/uploads'
+      : path.join(__dirname, '../../uploads');
     // Ensure uploads directory exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+    } catch (err) {
+      console.log('Error creating uploads directory:', err);
     }
     cb(null, uploadDir);
   },
