@@ -50,14 +50,16 @@ app.use(express.urlencoded({ extended: true }));
 
 // Ensure uploads folder exists
 const uploadsDir = (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production' || __dirname.includes('var/task') || __dirname.includes('var\\task'))
-  ? '/tmp/uploads'
+  ? '/tmp'
   : path.join(__dirname, '../uploads');
-try {
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+if (uploadsDir !== '/tmp') {
+  try {
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+  } catch (error) {
+    console.log('Unable to create uploads directory, skipping (expected on read-only serverless filesystems):', error);
   }
-} catch (error) {
-  console.log('Unable to create uploads directory, skipping (expected on read-only serverless filesystems):', error);
 }
 
 // Static folder for file uploads

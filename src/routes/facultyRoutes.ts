@@ -11,14 +11,17 @@ const router = Router();
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production' || __dirname.includes('var/task') || __dirname.includes('var\\task'))
-      ? '/tmp/uploads'
+      ? '/tmp'
       : path.join(__dirname, '../../uploads');
-    try {
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+    // Ensure uploads directory exists if not using /tmp
+    if (uploadDir !== '/tmp') {
+      try {
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+      } catch (err) {
+        console.log('Error creating uploads directory:', err);
       }
-    } catch (err) {
-      console.log('Error creating uploads directory:', err);
     }
     cb(null, uploadDir);
   },
