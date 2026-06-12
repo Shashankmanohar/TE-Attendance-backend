@@ -41,8 +41,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Ensure uploads folder exists
 const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (error) {
+  console.log('Unable to create uploads directory, skipping (expected on read-only serverless filesystems):', error);
 }
 
 // Static folder for file uploads
