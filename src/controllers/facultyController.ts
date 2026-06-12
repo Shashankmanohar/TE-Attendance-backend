@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import Faculty from '../models/Faculty';
+import FacultyAttendance from '../models/FacultyAttendance';
 import { AuthRequest } from '../middleware/auth';
 import { generateQRCode } from '../utils/qrHelper';
 import ActivityLog from '../models/ActivityLog';
@@ -227,6 +228,11 @@ export const deleteFaculty = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     await Faculty.findByIdAndDelete(req.params.id);
+
+    // Delete associated attendance records
+    if (faculty.facultyId) {
+      await FacultyAttendance.deleteMany({ facultyId: faculty.facultyId });
+    }
 
     await ActivityLog.create({
       userId: req.user?._id,

@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import Staff from '../models/Staff';
+import StaffAttendance from '../models/StaffAttendance';
 import { AuthRequest } from '../middleware/auth';
 import { generateQRCode } from '../utils/qrHelper';
 import ActivityLog from '../models/ActivityLog';
@@ -227,6 +228,11 @@ export const deleteStaff = async (req: AuthRequest, res: Response): Promise<void
     }
 
     await Staff.findByIdAndDelete(req.params.id);
+
+    // Delete associated attendance records
+    if (staff.staffId) {
+      await StaffAttendance.deleteMany({ staffId: staff.staffId });
+    }
 
     await ActivityLog.create({
       userId: req.user?._id,

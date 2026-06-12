@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import Student from '../models/Student';
 import Batch from '../models/Batch';
+import Attendance from '../models/Attendance';
 import { AuthRequest } from '../middleware/auth';
 import { generateQRCode } from '../utils/qrHelper';
 import ActivityLog from '../models/ActivityLog';
@@ -268,6 +269,11 @@ export const deleteStudent = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     await Student.findByIdAndDelete(req.params.id);
+
+    // Delete associated attendance records
+    if (student.studentId) {
+      await Attendance.deleteMany({ studentId: student.studentId });
+    }
 
     await ActivityLog.create({
       userId: req.user?._id,
