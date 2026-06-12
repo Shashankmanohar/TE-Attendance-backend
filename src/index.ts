@@ -29,9 +29,18 @@ const server = http.createServer(app);
 // Initialize Socket.io
 initSocket(server);
 
-// Enable CORS
+// Enable CORS dynamically for development and vercel domains
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || 
+        origin.startsWith('http://localhost') || 
+        origin.endsWith('.vercel.app') || 
+        origin === process.env.FRONTEND_URL) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
