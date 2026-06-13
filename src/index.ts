@@ -1,7 +1,10 @@
+import dotenv from 'dotenv';
+// Load env variables
+dotenv.config();
+
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import connectDB from './config/db';
@@ -16,9 +19,6 @@ import staffRoutes from './routes/staffRoutes';
 import facultyRoutes from './routes/facultyRoutes';
 import attendanceRoutes from './routes/attendanceRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
-
-// Load env variables
-dotenv.config();
 
 // Connect to Database
 connectDB();
