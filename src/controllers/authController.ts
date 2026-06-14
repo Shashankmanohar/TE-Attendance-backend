@@ -3,11 +3,39 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 import ActivityLog from '../models/ActivityLog';
+import { generateQRCode } from '../utils/qrHelper';
 
 const generateToken = (id: string): string => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'qr_attendance_jwt_secret_key_9988', {
     expiresIn: (process.env.JWT_EXPIRE || '30d') as any
   });
+};
+
+// Helper to generate unique User ID: USR-YYYY-XXXXXX
+const getNextUserId = async (): Promise<string> => {
+  const currentYear = new Date().getFullYear();
+  const prefix = `USR-${currentYear}-`;
+
+  // Find latest user ID for this year
+  const latestUser = await User.findOne({
+    userId: new RegExp(`^${prefix}`)
+  })
+    .sort({ userId: -1 })
+    .select('userId')
+    .lean();
+
+  let nextNum = 1;
+  if (latestUser && latestUser.userId) {
+    const numPart = latestUser.userId.replace(prefix, '');
+    const parsedNum = parseInt(numPart, 10);
+    if (!isNaN(parsedNum)) {
+      nextNum = parsedNum + 1;
+    }
+  }
+
+  // Format as USR-YYYY-000001
+  const zeroPaddedNum = String(nextNum).padStart(6, '0');
+  return `${prefix}${zeroPaddedNum}`;
 };
 
 // @desc    Auth user & get token
@@ -48,6 +76,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       token,
       user: {
         id: user._id,
+        userId: user.userId,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -97,12 +126,20 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
       }
     }
 
+    // Generate unique User ID
+    const userId = await getNextUserId();
+
+    // Generate unique QR code base64 from userId
+    const qrCodeData = await generateQRCode(userId);
+
     const newUser = await User.create({
+      userId,
       name,
       email,
       password,
       role,
-      branchId: role === 'super_admin' ? null : branchId
+      branchId: role === 'super_admin' ? null : branchId,
+      qrCodeData
     });
 
     await ActivityLog.create({
@@ -116,10 +153,12 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
       message: 'Staff user created successfully',
       data: {
         id: newUser._id,
+        userId: newUser.userId,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
-        branchId: newUser.branchId
+        branchId: newUser.branchId,
+        qrCodeData: newUser.qrCodeData
       }
     });
   } catch (error: any) {

@@ -47,38 +47,46 @@ const seedDB = async () => {
     
     // Super Admin
     const superAdmin = await User.create({
+      userId: 'USR-2026-000001',
       name: 'Super Admin',
       email: 'superadmin@coaching.com',
       password: 'password123',
       role: 'super_admin',
-      branchId: null
+      branchId: null,
+      qrCodeData: await generateQRCode('USR-2026-000001')
     });
 
     // Kolkata Branch Admin
     const adminKolkata = await User.create({
+      userId: 'USR-2026-000002',
       name: 'Kolkata Administrator',
       email: 'admin.kolkata@coaching.com',
       password: 'password123',
       role: 'admin',
-      branchId: branchKolkata._id
+      branchId: branchKolkata._id,
+      qrCodeData: await generateQRCode('USR-2026-000002')
     });
 
     // Kolkata Faculty / Teacher
     const teacherKolkata = await User.create({
+      userId: 'USR-2026-000003',
       name: 'Dr. R. C. Sen (Physics)',
       email: 'teacher.physics@coaching.com',
       password: 'password123',
       role: 'teacher',
-      branchId: branchKolkata._id
+      branchId: branchKolkata._id,
+      qrCodeData: await generateQRCode('USR-2026-000003')
     });
 
     // Kolkata Scanner Operator
     const scannerKolkata = await User.create({
+      userId: 'USR-2026-000004',
       name: 'Kolkata Scanner Counter 1',
       email: 'scanner.kolkata@coaching.com',
       password: 'password123',
       role: 'scanner_operator',
-      branchId: branchKolkata._id
+      branchId: branchKolkata._id,
+      qrCodeData: await generateQRCode('USR-2026-000004')
     });
 
     console.log('Staff users created.');

@@ -492,22 +492,27 @@ export const getAttendanceRecords = async (req: AuthRequest, res: Response): Pro
         .limit(lim)
         .lean();
 
-      const populatedRecords = await Promise.all(
+      const populatedRecords = (await Promise.all(
         records.map(async (record) => {
           const staffMember = await Staff.findOne({ staffId: record.staffId })
             .select('name designation photoUrl');
+          if (!staffMember) {
+            // Clean up orphaned attendance record asynchronously
+            StaffAttendance.deleteOne({ _id: record._id }).catch(() => {});
+            return null;
+          }
           return {
             ...record,
-            student: staffMember ? {
+            student: {
               name: staffMember.name,
               rollNumber: staffMember.designation,
               class: 'Staff',
               course: record.staffId,
               photoUrl: staffMember.photoUrl
-            } : null
+            }
           };
         })
-      );
+      )).filter(Boolean);
 
       const total = await StaffAttendance.countDocuments(query);
       res.status(200).json({
@@ -565,22 +570,27 @@ export const getAttendanceRecords = async (req: AuthRequest, res: Response): Pro
         .limit(lim)
         .lean();
 
-      const populatedRecords = await Promise.all(
+      const populatedRecords = (await Promise.all(
         records.map(async (record) => {
           const facultyMember = await Faculty.findOne({ facultyId: record.facultyId })
             .select('name designation photoUrl');
+          if (!facultyMember) {
+            // Clean up orphaned attendance record asynchronously
+            FacultyAttendance.deleteOne({ _id: record._id }).catch(() => {});
+            return null;
+          }
           return {
             ...record,
-            student: facultyMember ? {
+            student: {
               name: facultyMember.name,
               rollNumber: facultyMember.designation,
               class: 'Faculty',
               course: record.facultyId,
               photoUrl: facultyMember.photoUrl
-            } : null
+            }
           };
         })
-      );
+      )).filter(Boolean);
 
       const total = await FacultyAttendance.countDocuments(query);
       res.status(200).json({
@@ -648,17 +658,22 @@ export const getAttendanceRecords = async (req: AuthRequest, res: Response): Pro
       .lean();
 
     // Attach student details to records
-    const populatedRecords = await Promise.all(
+    const populatedRecords = (await Promise.all(
       records.map(async (record) => {
         const student = await Student.findOne({ studentId: record.studentId })
           .populate('batchId', 'name')
           .select('name rollNumber class course batchId photoUrl');
+        if (!student) {
+          // Clean up orphaned attendance record asynchronously
+          Attendance.deleteOne({ _id: record._id }).catch(() => {});
+          return null;
+        }
         return {
           ...record,
           student
         };
       })
-    );
+    )).filter(Boolean);
 
     const total = await Attendance.countDocuments(query);
 
