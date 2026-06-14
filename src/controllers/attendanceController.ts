@@ -141,13 +141,6 @@ export const markAttendanceScan = async (req: AuthRequest, res: Response): Promi
         modePerformed = 'check_in';
       }
 
-      const totalStaff = await Staff.countDocuments({ branchId: staff.branchId, active: true });
-      const presentStaff = await StaffAttendance.countDocuments({
-        branchId: staff.branchId,
-        date: today,
-        status: { $in: ['present', 'late'] }
-      });
-
       const liveScanData = {
         attendanceId: attendance._id,
         studentId: staff.staffId,
@@ -160,18 +153,35 @@ export const markAttendanceScan = async (req: AuthRequest, res: Response): Promi
         time: attendance.time,
         checkOutTime: attendance.checkOutTime || null,
         status: attendance.status,
-        livePresentCount: presentStaff,
-        liveTotalCount: totalStaff,
+        livePresentCount: 0,
+        liveTotalCount: 0,
         scanMode: modePerformed
       };
-
-      emitLiveScan(staff.branchId ? staff.branchId.toString() : 'global', liveScanData);
 
       res.status(200).json({
         success: true,
         message: modePerformed === 'check_out' ? 'Checked out successfully!' : `Attendance marked as ${attendance.status.toUpperCase()}!`,
         data: liveScanData
       });
+
+      // Emit live metrics asynchronously in the background
+      (async () => {
+        try {
+          const totalStaff = await Staff.countDocuments({ branchId: staff.branchId, active: true });
+          const presentStaff = await StaffAttendance.countDocuments({
+            branchId: staff.branchId,
+            date: today,
+            status: { $in: ['present', 'late'] }
+          });
+          emitLiveScan(staff.branchId ? staff.branchId.toString() : 'global', {
+            ...liveScanData,
+            livePresentCount: presentStaff,
+            liveTotalCount: totalStaff
+          });
+        } catch (err) {
+          console.error('Async staff live scan broadcast error:', err);
+        }
+      })();
       return;
     }
 
@@ -263,13 +273,6 @@ export const markAttendanceScan = async (req: AuthRequest, res: Response): Promi
         modePerformed = 'check_in';
       }
 
-      const totalFaculty = await Faculty.countDocuments({ branchId: faculty.branchId, active: true });
-      const presentFaculty = await FacultyAttendance.countDocuments({
-        branchId: faculty.branchId,
-        date: today,
-        status: { $in: ['present', 'late'] }
-      });
-
       const liveScanData = {
         attendanceId: attendance._id,
         studentId: faculty.facultyId,
@@ -282,18 +285,35 @@ export const markAttendanceScan = async (req: AuthRequest, res: Response): Promi
         time: attendance.time,
         checkOutTime: attendance.checkOutTime || null,
         status: attendance.status,
-        livePresentCount: presentFaculty,
-        liveTotalCount: totalFaculty,
+        livePresentCount: 0,
+        liveTotalCount: 0,
         scanMode: modePerformed
       };
-
-      emitLiveScan(faculty.branchId ? faculty.branchId.toString() : 'global', liveScanData);
 
       res.status(200).json({
         success: true,
         message: modePerformed === 'check_out' ? 'Checked out successfully!' : `Attendance marked as ${attendance.status.toUpperCase()}!`,
         data: liveScanData
       });
+
+      // Emit live metrics asynchronously in the background
+      (async () => {
+        try {
+          const totalFaculty = await Faculty.countDocuments({ branchId: faculty.branchId, active: true });
+          const presentFaculty = await FacultyAttendance.countDocuments({
+            branchId: faculty.branchId,
+            date: today,
+            status: { $in: ['present', 'late'] }
+          });
+          emitLiveScan(faculty.branchId ? faculty.branchId.toString() : 'global', {
+            ...liveScanData,
+            livePresentCount: presentFaculty,
+            liveTotalCount: totalFaculty
+          });
+        } catch (err) {
+          console.error('Async faculty live scan broadcast error:', err);
+        }
+      })();
       return;
     }
 
@@ -400,14 +420,6 @@ export const markAttendanceScan = async (req: AuthRequest, res: Response): Promi
       modePerformed = 'check_in';
     }
 
-    // 5. Calculate updated metrics for live sync
-    const totalStudents = await Student.countDocuments({ branchId: branchDbId, active: true });
-    const presentStudents = await Attendance.countDocuments({
-      branchId: branchDbId,
-      date: today,
-      status: { $in: ['present', 'late'] }
-    });
-
     const liveScanData = {
       attendanceId: attendance._id,
       studentId: student.studentId,
@@ -420,22 +432,40 @@ export const markAttendanceScan = async (req: AuthRequest, res: Response): Promi
       time: attendance.time,
       checkOutTime: attendance.checkOutTime || null,
       status: attendance.status,
-      livePresentCount: presentStudents,
-      liveTotalCount: totalStudents,
+      livePresentCount: 0,
+      liveTotalCount: 0,
       scanMode: modePerformed
     };
 
-    // 6. Broadcast via Socket.io
-    emitLiveScan(branchDbId ? branchDbId.toString() : 'global', liveScanData);
-
-    // 7. Mock Parent notification triggers (ready for API integration)
-    console.log(`[Notification Triggered] to Parent (${student.parentPhoneNumber}): Dear Parent, your child ${student.name} ${modePerformed === 'check_out' ? 'left' : 'arrived at'} coaching institute at ${timeStr}.`);
-
+    // Send HTTP response instantly to make scanner super fast
     res.status(200).json({
       success: true,
       message: modePerformed === 'check_out' ? 'Checked out successfully!' : `Attendance marked as ${attendance.status.toUpperCase()}!`,
       data: liveScanData
     });
+
+    // Run metrics & socket broadcast asynchronously in the background
+    (async () => {
+      try {
+        const totalStudents = await Student.countDocuments({ branchId: branchDbId, active: true });
+        const presentStudents = await Attendance.countDocuments({
+          branchId: branchDbId,
+          date: today,
+          status: { $in: ['present', 'late'] }
+        });
+        
+        emitLiveScan(branchDbId ? branchDbId.toString() : 'global', {
+          ...liveScanData,
+          livePresentCount: presentStudents,
+          liveTotalCount: totalStudents
+        });
+      } catch (err) {
+        console.error('Async student live scan broadcast error:', err);
+      }
+    })();
+
+    // 7. Mock Parent notification triggers (ready for API integration)
+    console.log(`[Notification Triggered] to Parent (${student.parentPhoneNumber}): Dear Parent, your child ${student.name} ${modePerformed === 'check_out' ? 'left' : 'arrived at'} coaching institute at ${timeStr}.`);
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
