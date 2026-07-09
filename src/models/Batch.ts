@@ -2,7 +2,7 @@ import { Schema, model, Document } from 'mongoose';
 
 export interface IBatch extends Document {
   name: string;
-  class: '11th' | '12th';
+  class: '11th' | '12th' | 'Dropper';
   course: 'JEE' | 'NEET';
   subject: string;
   timings: string;
@@ -12,7 +12,7 @@ export interface IBatch extends Document {
 
 const BatchSchema = new Schema<IBatch>({
   name: { type: String, required: true, trim: true },
-  class: { type: String, enum: ['11th', '12th'], required: true },
+  class: { type: String, enum: ['11th', '12th', 'Dropper'], required: true },
   course: { type: String, enum: ['JEE', 'NEET'], required: true },
   subject: { type: String, required: true },
   timings: { type: String, required: true },

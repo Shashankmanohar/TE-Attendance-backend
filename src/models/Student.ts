@@ -10,7 +10,7 @@ export interface IStudent extends Document {
   address: string;
   admissionDate: Date;
   photoUrl: string;
-  class: '11th' | '12th';
+  class: '11th' | '12th' | 'Dropper';
   course: 'JEE' | 'NEET';
   batchId: Schema.Types.ObjectId;
   branchId?: Schema.Types.ObjectId | null;
@@ -29,7 +29,7 @@ const StudentSchema = new Schema<IStudent>({
   address: { type: String, required: true },
   admissionDate: { type: Date, default: Date.now },
   photoUrl: { type: String, default: '' },
-  class: { type: String, enum: ['11th', '12th'], required: true },
+  class: { type: String, enum: ['11th', '12th', 'Dropper'], required: true },
   course: { type: String, enum: ['JEE', 'NEET'], required: true },
   batchId: { type: Schema.Types.ObjectId, ref: 'Batch', required: true },
   branchId: { type: Schema.Types.ObjectId, ref: 'Branch', default: null },
