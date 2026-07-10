@@ -5,8 +5,8 @@ export interface IStudent extends Document {
   name: string;
   rollNumber: string;
   phoneNumber: string;
-  parentPhoneNumber: string;
-  email?: string;
+  parentPhoneNumber?: string;
+  fatherName?: string;
   address: string;
   admissionDate: Date;
   photoUrl: string;
@@ -24,8 +24,8 @@ const StudentSchema = new Schema<IStudent>({
   name: { type: String, required: true, trim: true },
   rollNumber: { type: String, required: true, trim: true },
   phoneNumber: { type: String, required: true },
-  parentPhoneNumber: { type: String, required: true },
-  email: { type: String, lowercase: true, trim: true },
+  parentPhoneNumber: { type: String },
+  fatherName: { type: String, trim: true },
   address: { type: String, required: true },
   admissionDate: { type: Date, default: Date.now },
   photoUrl: { type: String, default: '' },

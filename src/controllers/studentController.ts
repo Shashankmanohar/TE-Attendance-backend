@@ -126,7 +126,7 @@ export const getStudentByStudentId = async (req: AuthRequest, res: Response): Pr
 // @access  Private (Super Admin & Admin)
 export const createStudent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { name, rollNumber, phoneNumber, parentPhoneNumber, email, address, classLvl, course, batchId, branchId } = req.body;
+    const { name, rollNumber, phoneNumber, parentPhoneNumber, fatherName, address, classLvl, course, batchId, branchId } = req.body;
 
     let targetBranchId = branchId || null;
     if (req.user?.role === 'admin') {
@@ -168,7 +168,7 @@ export const createStudent = async (req: AuthRequest, res: Response): Promise<vo
       rollNumber,
       phoneNumber,
       parentPhoneNumber,
-      email,
+      fatherName,
       address,
       class: classLvl,
       course,
@@ -195,7 +195,7 @@ export const createStudent = async (req: AuthRequest, res: Response): Promise<vo
 // @access  Private (Super Admin & Admin)
 export const updateStudent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { name, rollNumber, phoneNumber, parentPhoneNumber, email, address, classLvl, course, batchId, branchId, active } = req.body;
+    const { name, rollNumber, phoneNumber, parentPhoneNumber, fatherName, address, classLvl, course, batchId, branchId, active } = req.body;
 
     let student = await Student.findById(req.params.id);
     if (!student) {
@@ -225,8 +225,8 @@ export const updateStudent = async (req: AuthRequest, res: Response): Promise<vo
 
     student.name = name || student.name;
     student.phoneNumber = phoneNumber || student.phoneNumber;
-    student.parentPhoneNumber = parentPhoneNumber || student.parentPhoneNumber;
-    student.email = email !== undefined ? email : student.email;
+    student.parentPhoneNumber = parentPhoneNumber !== undefined ? parentPhoneNumber : student.parentPhoneNumber;
+    student.fatherName = fatherName !== undefined ? fatherName : student.fatherName;
     student.address = address || student.address;
     student.class = classLvl || student.class;
     student.course = course || student.course;
